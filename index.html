@@ -1,0 +1,512 @@
+<title>iManage Health Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+
+<style>
+  :root{
+    --ground:#eef1f6;
+    --surface:#ffffff;
+    --surface-2:#f6f8fb;
+    --ink:#0f1c2e;
+    --ink-soft:#3d4c60;
+    --ink-faint:#697789;
+    --line:#dde3ec;
+    --line-strong:#c6d0dd;
+    --accent:#2456b8;
+    --accent-soft:#e7eefb;
+    --ok:#1c7a45;
+    --ok-soft:#e3f3e9;
+    --warn:#9a6a12;
+    --warn-soft:#f8efd8;
+    --crit:#b5322c;
+    --crit-soft:#fae5e3;
+    --shadow:0 1px 2px rgba(15,28,46,.06),0 8px 24px rgba(15,28,46,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0a121f;
+      --surface:#111d2e;
+      --surface-2:#0d1826;
+      --ink:#eef2f8;
+      --ink-soft:#b3c0d1;
+      --ink-faint:#7d8b9f;
+      --line:#22334a;
+      --line-strong:#31465f;
+      --accent:#5b8def;
+      --accent-soft:#16263d;
+      --ok:#4bb877;
+      --ok-soft:#12261b;
+      --warn:#d6a53f;
+      --warn-soft:#2a2110;
+      --crit:#e8756e;
+      --crit-soft:#2c1615;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0a121f;
+    --surface:#111d2e;
+    --surface-2:#0d1826;
+    --ink:#eef2f8;
+    --ink-soft:#b3c0d1;
+    --ink-faint:#7d8b9f;
+    --line:#22334a;
+    --line-strong:#31465f;
+    --accent:#5b8def;
+    --accent-soft:#16263d;
+    --ok:#4bb877;
+    --ok-soft:#12261b;
+    --warn:#d6a53f;
+    --warn-soft:#2a2110;
+    --crit:#e8756e;
+    --crit-soft:#2c1615;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 22px 56px}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  h1,h2,h3{text-wrap:balance;margin:0}
+
+  /* Masthead */
+  .mast{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);display:grid;place-items:center;flex:0 0 auto}
+  .brand-mark span{color:#fff;font-family:"IBM Plex Serif",serif;font-weight:600;font-size:20px;line-height:1}
+  .brand-name{font-weight:700;font-size:18px;letter-spacing:.2px}
+  .brand-sub{font-size:12px;color:var(--ink-faint);letter-spacing:.3px}
+  .demo-tag{
+    font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px;
+  }
+
+  .title-block{margin-bottom:20px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
+  .title-block h1{font-size:29px;font-weight:700;margin:7px 0 6px;letter-spacing:-.3px}
+  .title-block p{margin:0;color:var(--ink-soft);font-size:15px;max-width:70ch}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .section-label{display:flex;align-items:baseline;gap:10px;margin:34px 2px 13px}
+  .section-label h2{font-size:15px;font-weight:600;letter-spacing:.2px}
+  .section-label .n{font-size:12px;font-weight:600;color:var(--ink-faint)}
+  .section-label .hint{margin-left:auto;font-size:12px;color:var(--ink-faint)}
+
+  /* Dashboard console */
+  .console-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px}
+  .tab{
+    border:0;background:transparent;color:var(--ink-soft);font:inherit;font-size:13px;font-weight:600;
+    padding:7px 13px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s;
+  }
+  .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(15,28,46,.1)}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .scan{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .scan-time{font-size:12px;color:var(--ink-faint)}
+  .btn{
+    border:1px solid var(--accent);background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:600;
+    padding:8px 15px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:opacity .15s,transform .05s;
+  }
+  .btn:hover{opacity:.92}
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn .dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.9}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+  .kpi{padding:15px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .kpi:nth-child(4){border-right:0}
+  .kpi .k-label{font-size:11.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-faint)}
+  .kpi .k-val{font-size:26px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .kpi .k-val.ok{color:var(--ok)}
+  .kpi .k-val.warn{color:var(--warn)}
+  .kpi .k-val.crit{color:var(--crit)}
+  .env-note{padding:11px 18px;font-size:12.5px;color:var(--ink-soft);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .env-note b{color:var(--ink);font-weight:600}
+
+  /* Check rows */
+  .checks{padding:6px 0 4px}
+  .check{
+    display:grid;grid-template-columns:15px 1fr auto 88px;align-items:center;gap:14px;
+    padding:12px 18px;border-top:1px solid var(--line);
+  }
+  .check:first-child{border-top:0}
+  .stripe{width:5px;height:34px;border-radius:3px}
+  .stripe.ok{background:var(--ok)}
+  .stripe.warn{background:var(--warn)}
+  .stripe.crit{background:var(--crit)}
+  .c-name{font-weight:600;font-size:14px}
+  .c-detail{font-size:12.5px;color:var(--ink-faint);margin-top:2px}
+  .c-detail .val{color:var(--ink-soft);font-weight:500}
+  .pill{
+    justify-self:start;font-size:11.5px;font-weight:600;letter-spacing:.3px;padding:4px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .pill.ok{color:var(--ok);background:var(--ok-soft)}
+  .pill.warn{color:var(--warn);background:var(--warn-soft)}
+  .pill.crit{color:var(--crit);background:var(--crit-soft)}
+  .spark{justify-self:end}
+
+  /* Architecture */
+  .arch{padding:20px 18px}
+  .arch svg{width:100%;height:auto;display:block}
+  .arch-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--ink-soft)}
+  .arch-legend span{display:inline-flex;align-items:center;gap:7px}
+  .lg-swatch{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+
+  /* Roadmap */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .phase{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);position:relative}
+  .phase.pilot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+  .phase .p-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .p-num{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--accent)}
+  .p-time{font-size:11.5px;font-weight:600;color:var(--ink-faint);background:var(--surface-2);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
+  .phase h3{font-size:14.5px;font-weight:600;margin-bottom:6px}
+  .phase p{margin:0;font-size:12.8px;color:var(--ink-soft)}
+  .pilot-flag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);margin-top:9px}
+
+  /* Offer */
+  .offer{margin-top:16px;display:grid;grid-template-columns:1.5fr 1fr;gap:0;overflow:hidden}
+  .offer-l{padding:20px 22px}
+  .offer-l h2{font-size:17px;font-weight:600;margin-bottom:8px}
+  .offer-l p{margin:0;font-size:13.5px;color:var(--ink-soft);max-width:52ch}
+  .offer-l ul{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .offer-l li{font-size:13px;color:var(--ink);display:flex;gap:9px;align-items:flex-start}
+  .offer-l li .tick{color:var(--ok);font-weight:700;flex:0 0 auto}
+  .offer-r{background:var(--surface-2);border-left:1px solid var(--line);padding:20px 22px;display:flex;flex-direction:column;justify-content:center}
+  .offer-r .r-label{font-size:11.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint)}
+  .offer-r .r-price{font-size:30px;font-weight:700;letter-spacing:-.5px;margin:4px 0 2px}
+  .offer-r .r-cred{font-size:12.5px;color:var(--ok);font-weight:600}
+  .offer-r .r-time{font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-faint)}
+
+  @media (max-width:760px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .kpi:nth-child(2){border-right:0}
+    .road{grid-template-columns:1fr}
+    .offer{grid-template-columns:1fr}
+    .offer-r{border-left:0;border-top:1px solid var(--line)}
+    .check{grid-template-columns:15px 1fr auto;}
+    .spark{display:none}
+    .title-block h1{font-size:24px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+  <div class="mast">
+    <div class="brand">
+      <div class="brand-mark"><span>C</span></div>
+      <div>
+        <div class="brand-name">Crewnexa</div>
+        <div class="brand-sub">Enterprise DMS Deployment and Managed Support</div>
+      </div>
+    </div>
+    <div class="demo-tag">Demonstration environment, simulated data</div>
+  </div>
+
+  <div class="title-block">
+    <div class="eyebrow">iManage Work, deployment and maintenance</div>
+    <h1>iManage Environment Health Check</h1>
+    <p>A single view of the components that keep an iManage Work environment stable and secure, built for a managed service provider running several client tenants at once. This page shows the working model we operate for you from day one, then how the full engagement is phased and priced.</p>
+  </div>
+
+  <div class="section-label">
+    <span class="n">01</span>
+    <h2>Live tenant health console</h2>
+    <span class="hint">Switch tenants, then run a check</span>
+  </div>
+
+  <div class="card">
+    <div class="console-top">
+      <div class="tabs" role="tablist" aria-label="Client tenants">
+        <button class="tab" role="tab" aria-selected="true" data-env="A">Meridian Law LLP</button>
+        <button class="tab" role="tab" aria-selected="false" data-env="B">Hargrove and Finch</button>
+        <button class="tab" role="tab" aria-selected="false" data-env="C">Castellan Advisors</button>
+      </div>
+      <div class="scan">
+        <span class="scan-time" id="scanTime">Last check 2 min ago</span>
+        <button class="btn" id="runBtn"><span class="dot"></span>Run health check</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+    <div class="env-note" id="envNote"></div>
+    <div class="checks" id="checks"></div>
+  </div>
+
+  <div class="section-label">
+    <span class="n">02</span>
+    <h2>What we deploy and monitor</h2>
+    <span class="hint">iManage Work reference architecture</span>
+  </div>
+
+  <div class="card arch">
+    <svg viewBox="0 0 920 300" role="img" aria-label="iManage Work architecture from user clients through the application tier to the data and search tier">
+      <defs>
+        <style>
+          .box{fill:var(--surface-2);stroke:var(--line-strong);stroke-width:1.5;rx:9}
+          .box-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+          .lbl{fill:var(--ink);font-family:"IBM Plex Sans",sans-serif;font-size:13px;font-weight:600}
+          .sub{fill:var(--ink-faint);font-family:"IBM Plex Mono",monospace;font-size:10.5px}
+          .zone{fill:var(--ink-faint);font-family:"IBM Plex Sans",sans-serif;font-size:11px;font-weight:600;letter-spacing:1px}
+          .flow{stroke:var(--line-strong);stroke-width:1.6;fill:none}
+        </style>
+      </defs>
+
+      <text x="20" y="24" class="zone">USER TIER</text>
+      <text x="345" y="24" class="zone">APPLICATION TIER</text>
+      <text x="720" y="24" class="zone">DATA AND SEARCH TIER</text>
+
+      <line x1="20" y1="150" x2="200" y2="150" class="flow"/>
+      <line x1="330" y1="90" x2="330" y2="220" class="flow"/>
+      <line x1="530" y1="150" x2="690" y2="150" class="flow"/>
+
+      <rect x="20" y="60" width="180" height="60" class="box" rx="9"/>
+      <text x="34" y="86" class="lbl">Outlook and Word</text>
+      <text x="34" y="104" class="sub">Work Desktop for Windows</text>
+
+      <rect x="20" y="180" width="180" height="60" class="box" rx="9"/>
+      <text x="34" y="206" class="lbl">Browser and mobile</text>
+      <text x="34" y="224" class="sub">Work Web and Work 10</text>
+
+      <rect x="215" y="120" width="130" height="60" class="box-a" rx="9"/>
+      <text x="229" y="146" class="lbl">Load balancer</text>
+      <text x="229" y="164" class="sub">TLS, SSO, Entra ID</text>
+
+      <rect x="360" y="55" width="170" height="52" class="box" rx="9"/>
+      <text x="374" y="79" class="lbl">Work Server</text>
+      <text x="374" y="96" class="sub">application services, IIS</text>
+
+      <rect x="360" y="124" width="170" height="52" class="box" rx="9"/>
+      <text x="374" y="148" class="lbl">Worker services</text>
+      <text x="374" y="165" class="sub">background job queue</text>
+
+      <rect x="360" y="193" width="170" height="52" class="box" rx="9"/>
+      <text x="374" y="217" class="lbl">Control Center</text>
+      <text x="374" y="234" class="sub">admin, security policies</text>
+
+      <rect x="700" y="55" width="180" height="52" class="box" rx="9"/>
+      <text x="714" y="79" class="lbl">SQL Server</text>
+      <text x="714" y="96" class="sub">metadata, audit trail</text>
+
+      <rect x="700" y="124" width="180" height="52" class="box" rx="9"/>
+      <text x="714" y="148" class="lbl">Indexer and search</text>
+      <text x="714" y="165" class="sub">full text indexing</text>
+
+      <rect x="700" y="193" width="180" height="52" class="box" rx="9"/>
+      <text x="714" y="217" class="lbl">Document store</text>
+      <text x="714" y="234" class="sub">files, backup target</text>
+    </svg>
+    <div class="arch-legend">
+      <span><i class="lg-swatch" style="background:var(--accent)"></i>Entry and identity, where access and ethical walls are enforced</span>
+      <span><i class="lg-swatch" style="background:var(--line-strong)"></i>Components tracked in the health console above</span>
+    </div>
+  </div>
+
+  <div class="section-label">
+    <span class="n">03</span>
+    <h2>How the engagement runs</h2>
+    <span class="hint">Initial deployment, then ongoing managed support</span>
+  </div>
+
+  <div class="road">
+    <div class="phase pilot">
+      <div class="p-top"><span class="p-num">Phase 0</span><span class="p-time">3 to 4 days</span></div>
+      <h3>Discovery and assessment</h3>
+      <p>Environment audit, sizing, security and ethical wall mapping, and a baseline health report with the deployment plan.</p>
+      <span class="pilot-flag">Offered as a paid pilot</span>
+    </div>
+    <div class="phase">
+      <div class="p-top"><span class="p-num">Phase 1</span><span class="p-time">Week 2</span></div>
+      <h3>Design and preparation</h3>
+      <p>Architecture sign off, infrastructure provisioning, and prerequisites across Windows Server, SQL Server, and certificates.</p>
+    </div>
+    <div class="phase">
+      <div class="p-top"><span class="p-num">Phase 2</span><span class="p-time">Weeks 3 to 5</span></div>
+      <h3>Install and configure</h3>
+      <p>Work Server, database, Indexer and search, Worker services, and Outlook and Word integration brought online.</p>
+    </div>
+    <div class="phase">
+      <div class="p-top"><span class="p-num">Phase 3</span><span class="p-time">Weeks 5 to 8</span></div>
+      <h3>Security and migration</h3>
+      <p>Permissions, ethical walls, single sign on, and controlled document and email migration into the environment.</p>
+    </div>
+    <div class="phase">
+      <div class="p-top"><span class="p-num">Phase 4</span><span class="p-time">Weeks 8 to 10</span></div>
+      <h3>Testing and go live</h3>
+      <p>Load testing, user acceptance, cutover, and a hypercare window while the environment settles.</p>
+    </div>
+    <div class="phase">
+      <div class="p-top"><span class="p-num">Phase 5</span><span class="p-time">Ongoing</span></div>
+      <h3>Maintenance and support</h3>
+      <p>The console above run as a service: monitoring, patching, backups, user support, and agreed response times.</p>
+    </div>
+  </div>
+
+  <div class="card offer">
+    <div class="offer-l">
+      <h2>Starting point: the Phase 0 pilot</h2>
+      <p>For a first engagement, we begin with a focused assessment so you see how we work before committing to the full deployment. You receive real output, not a call.</p>
+      <ul>
+        <li><span class="tick">✓</span>Baseline health report against every component shown above</li>
+        <li><span class="tick">✓</span>Risk list with severity, sorted by what to fix first</li>
+        <li><span class="tick">✓</span>Deployment plan and timeline scoped to your environment</li>
+      </ul>
+    </div>
+    <div class="offer-r">
+      <div class="r-label">Pilot, fixed</div>
+      <div class="r-price">$350</div>
+      <div class="r-cred">Credited toward the full project</div>
+      <div class="r-time">Delivered in 3 to 4 business days from access.</div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Crewnexa, iManage Work deployment and managed support</span>
+    <span>Figures on this page are a demonstration model, not live client telemetry.</span>
+  </footer>
+
+</div>
+
+<script>
+  const DATA = {
+    A: {
+      client: "Meridian Law LLP",
+      kpis: [
+        {label:"Components", val:"10", cls:""},
+        {label:"Healthy", val:"9", cls:"ok"},
+        {label:"Warnings", val:"1", cls:"warn"},
+        {label:"Critical", val:"0", cls:"ok"}
+      ],
+      note: 'Environment stable. One item needs attention before it becomes a problem.',
+      checks: [
+        {name:"Work Server services", status:"ok", detail:"IIS app pools running", val:"resp 240 ms", spark:[6,5,6,5,4,5,4,4]},
+        {name:"SQL metadata database", status:"ok", detail:"query latency", val:"18 ms", spark:[5,6,5,5,6,5,4,5]},
+        {name:"Indexer and full text search", status:"ok", detail:"queue depth", val:"12 docs", spark:[7,6,5,6,4,5,4,3]},
+        {name:"Worker services", status:"ok", detail:"jobs pending", val:"3", spark:[4,5,4,3,4,3,3,2]},
+        {name:"Document store capacity", status:"ok", detail:"used", val:"61%", spark:[3,3,4,4,4,5,5,5]},
+        {name:"Outlook and Word integration", status:"ok", detail:"Work Desktop reachable", val:"online", spark:[5,5,5,4,5,5,5,5]},
+        {name:"Security policies and ethical walls", status:"ok", detail:"integrity check", val:"passed", spark:[5,5,5,5,5,5,5,5]},
+        {name:"SSL certificate", status:"warn", detail:"expires in", val:"24 days", spark:[8,7,6,5,4,3,2,1]},
+        {name:"Last backup", status:"ok", detail:"completed", val:"6 h ago", spark:[5,4,5,4,5,4,5,4]},
+        {name:"Active user sessions", status:"ok", detail:"current", val:"148", spark:[4,5,6,7,6,7,6,6]}
+      ]
+    },
+    B: {
+      client: "Hargrove and Finch",
+      kpis: [
+        {label:"Components", val:"10", cls:""},
+        {label:"Healthy", val:"8", cls:"ok"},
+        {label:"Warnings", val:"1", cls:"warn"},
+        {label:"Critical", val:"1", cls:"crit"}
+      ],
+      note: 'Search is falling behind and a backup was missed. Both are surfaced before users report them.',
+      checks: [
+        {name:"Work Server services", status:"ok", detail:"IIS app pools running", val:"resp 310 ms", spark:[5,5,6,5,6,5,6,5]},
+        {name:"SQL metadata database", status:"ok", detail:"query latency", val:"27 ms", spark:[4,5,5,6,5,6,5,6]},
+        {name:"Indexer and full text search", status:"crit", detail:"queue depth", val:"9,400 docs", spark:[2,3,4,5,6,7,8,9]},
+        {name:"Worker services", status:"ok", detail:"jobs pending", val:"11", spark:[3,4,4,5,4,5,5,6]},
+        {name:"Document store capacity", status:"ok", detail:"used", val:"74%", spark:[4,4,5,5,6,6,6,7]},
+        {name:"Outlook and Word integration", status:"ok", detail:"Work Desktop reachable", val:"online", spark:[5,5,5,5,5,5,5,5]},
+        {name:"Security policies and ethical walls", status:"ok", detail:"integrity check", val:"passed", spark:[5,5,5,5,5,5,5,5]},
+        {name:"SSL certificate", status:"ok", detail:"expires in", val:"96 days", spark:[8,8,7,7,7,6,6,6]},
+        {name:"Last backup", status:"warn", detail:"last success", val:"38 h ago", spark:[5,4,5,4,3,3,2,2]},
+        {name:"Active user sessions", status:"ok", detail:"current", val:"212", spark:[5,6,6,7,7,8,7,7]}
+      ]
+    },
+    C: {
+      client: "Castellan Advisors",
+      kpis: [
+        {label:"Components", val:"10", cls:""},
+        {label:"Healthy", val:"10", cls:"ok"},
+        {label:"Warnings", val:"0", cls:"ok"},
+        {label:"Critical", val:"0", cls:"ok"}
+      ],
+      note: 'All components within target. Steady state, no action required.',
+      checks: [
+        {name:"Work Server services", status:"ok", detail:"IIS app pools running", val:"resp 190 ms", spark:[5,4,5,4,4,4,3,4]},
+        {name:"SQL metadata database", status:"ok", detail:"query latency", val:"14 ms", spark:[4,4,5,4,4,5,4,4]},
+        {name:"Indexer and full text search", status:"ok", detail:"queue depth", val:"5 docs", spark:[4,3,4,3,3,2,3,2]},
+        {name:"Worker services", status:"ok", detail:"jobs pending", val:"1", spark:[3,2,3,2,2,2,1,2]},
+        {name:"Document store capacity", status:"ok", detail:"used", val:"48%", spark:[3,3,3,4,4,4,4,4]},
+        {name:"Outlook and Word integration", status:"ok", detail:"Work Desktop reachable", val:"online", spark:[5,5,5,5,5,5,5,5]},
+        {name:"Security policies and ethical walls", status:"ok", detail:"integrity check", val:"passed", spark:[5,5,5,5,5,5,5,5]},
+        {name:"SSL certificate", status:"ok", detail:"expires in", val:"171 days", spark:[8,8,8,7,7,7,7,6]},
+        {name:"Last backup", status:"ok", detail:"completed", val:"3 h ago", spark:[5,4,5,4,5,4,5,4]},
+        {name:"Active user sessions", status:"ok", detail:"current", val:"63", spark:[3,4,4,5,4,5,4,5]}
+      ]
+    }
+  };
+
+  const COLOR = {ok:"var(--ok)", warn:"var(--warn)", crit:"var(--crit)"};
+  const LABEL = {ok:"Healthy", warn:"Attention", crit:"Critical"};
+
+  function sparkSVG(points, status){
+    const w=76, h=26, pad=3;
+    const max=Math.max(...points), min=Math.min(...points);
+    const span=(max-min)||1;
+    const step=(w-pad*2)/(points.length-1);
+    const coords=points.map((p,i)=>{
+      const x=pad+i*step;
+      const y=pad+(h-pad*2)*(1-(p-min)/span);
+      return [x,y];
+    });
+    const line=coords.map(c=>c[0].toFixed(1)+","+c[1].toFixed(1)).join(" ");
+    const area="M"+pad+","+(h-pad)+" L"+line.replace(/ /g," L")+" L"+(w-pad)+","+(h-pad)+" Z";
+    const end=coords[coords.length-1];
+    return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'
+      +'<path d="'+area+'" fill="'+COLOR[status]+'" opacity="0.12"/>'
+      +'<polyline points="'+line+'" fill="none" stroke="'+COLOR[status]+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<circle cx="'+end[0].toFixed(1)+'" cy="'+end[1].toFixed(1)+'" r="2.4" fill="'+COLOR[status]+'"/></svg>';
+  }
+
+  function render(env){
+    const d=DATA[env];
+    document.getElementById("kpis").innerHTML = d.kpis.map(k=>
+      '<div class="kpi"><div class="k-label">'+k.label+'</div><div class="k-val '+k.cls+'">'+k.val+'</div></div>'
+    ).join("");
+    document.getElementById("envNote").innerHTML = '<b>'+d.client+'</b><span>'+d.note+'</span>';
+    document.getElementById("checks").innerHTML = d.checks.map(c=>
+      '<div class="check">'
+      +'<div class="stripe '+c.status+'"></div>'
+      +'<div><div class="c-name">'+c.name+'</div><div class="c-detail">'+c.detail+' <span class="val">'+c.val+'</span></div></div>'
+      +'<div class="pill '+c.status+'">'+LABEL[c.status]+'</div>'
+      +'<div class="spark">'+sparkSVG(c.spark,c.status)+'</div>'
+      +'</div>'
+    ).join("");
+  }
+
+  let current="A";
+  const tabs=[...document.querySelectorAll(".tab")];
+  tabs.forEach(t=>t.addEventListener("click",()=>{
+    tabs.forEach(x=>x.setAttribute("aria-selected", x===t ? "true":"false"));
+    current=t.dataset.env;
+    render(current);
+    document.getElementById("scanTime").textContent="Last check just now";
+  }));
+
+  document.getElementById("runBtn").addEventListener("click",()=>{
+    const btn=document.getElementById("runBtn");
+    btn.style.opacity="0.6";
+    btn.firstChild.textContent="";
+    document.getElementById("scanTime").textContent="Running checks...";
+    setTimeout(()=>{
+      render(current);
+      document.getElementById("scanTime").textContent="Last check just now";
+      btn.style.opacity="";
+    },650);
+  });
+
+  render(current);
+</script>
